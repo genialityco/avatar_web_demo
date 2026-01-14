@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <!-- HTML Meta Tags -->
-    <title>KalidoKit - Face and Body Rig Solver</title>
+    <title>Avatar demo</title>
     <meta
       name="description"
       content="Track face and body rigs just your browser webcam!"
@@ -56,7 +56,20 @@
     
     </div>
    
+    <div id="controls">
+      <label for="avatar-select">Choose Avatar:</label>
+      <select id="avatar-select">
+        <option value="/avatar.vrm">Avatar 1</option>
+        <option value="/avatar2.vrm">Avatar 2</option>
+      </select>
+    </div>
    
+    <div id="loading">
+      <p>Loading Model...</p>
+      <div id="progress-container">
+        <div id="progress-bar"></div>
+      </div>
+    </div>
    
     <script src="/script.js"></script>
   </body>

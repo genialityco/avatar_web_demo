@@ -46,32 +46,56 @@ animate();
 
 /* VRM CHARACTER SETUP */
 
-// Import Character VRM
-const loader = new THREE.GLTFLoader();
-loader.crossOrigin = "anonymous";
-// Import model from URL, add your own model here
-loader.load(
-  "/avatar.vrm",
+// Function to load VRM avatar
+const loadAvatar = (url) => {
+  // Show loading
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('progress-bar').style.width = '0%';
 
-  gltf => {
-    THREE.VRMUtils.removeUnnecessaryJoints(gltf.scene);
+  // Remove current VRM if exists
+  if (currentVrm) {
+    scene.remove(currentVrm.scene);
+    currentVrm = null;
+  }
 
-    THREE.VRM.from(gltf).then(vrm => {
-      scene.add(vrm.scene);
-      currentVrm = vrm;
-      currentVrm.scene.rotation.y = Math.PI; // Rotate model 180deg to face camera
-    });
-  },
+  const loader = new THREE.GLTFLoader();
+  loader.crossOrigin = "anonymous";
+  loader.load(
+    url,
+    gltf => {
+      THREE.VRMUtils.removeUnnecessaryJoints(gltf.scene);
 
-  progress =>
-    console.log(
-      "Loading model...",
-      100.0 * (progress.loaded / progress.total),
-      "%"
-    ),
+      THREE.VRM.from(gltf).then(vrm => {
+        scene.add(vrm.scene);
+        currentVrm = vrm;
+        currentVrm.scene.rotation.y = Math.PI; // Rotate model 180deg to face camera
+        document.getElementById('loading').style.display = 'none';
+      });
+    },
+    progress => {
+      const percent = (progress.loaded / progress.total) * 100;
+      document.getElementById('progress-bar').style.width = percent + '%';
+      console.log(
+        "Loading model...",
+        percent,
+        "%"
+      );
+    },
+    error => {
+      console.error(error);
+      document.getElementById('loading').innerHTML = '<p>Error loading model</p>';
+    }
+  );
+};
 
-  error => console.error(error)
-);
+// Load initial avatar
+const avatarSelect = document.getElementById('avatar-select');
+loadAvatar(avatarSelect.value);
+
+// Handle avatar change
+avatarSelect.addEventListener('change', () => {
+  loadAvatar(avatarSelect.value);
+});
 
 // Animate Rotation Helper function
 const rigRotation = (
@@ -126,11 +150,11 @@ const rigFace = (riggedFace) => {
   
     // Simple example without winking. Interpolate based on old blendshape, then stabilize blink with `Kalidokit` helper function.
     // for VRM, 1 is closed, 0 is open.
-    riggedFace.eye.l = lerp(clamp(1 - riggedFace.eye.l, 0, 1),Blendshape.getValue(PresetName.Blink), .5)
-    riggedFace.eye.r = lerp(clamp(1 - riggedFace.eye.r, 0, 1),Blendshape.getValue(PresetName.Blink), .5)
-    riggedFace.eye = Kalidokit.Face.stabilizeBlink(riggedFace.eye,riggedFace.head.y)
-    Blendshape.setValue(PresetName.Blink, riggedFace.eye.l);
-    
+    riggedFace.eye.l = lerp(clamp(1 - riggedFace.eye.l, 0, 1),Blendshape.getValue(PresetName.BlinkL), .5)
+    riggedFace.eye.r = lerp(clamp(1 - riggedFace.eye.r, 0, 1),Blendshape.getValue(PresetName.BlinkR), .5)
+    //riggedFace.eye = Kalidokit.Face.stabilizeBlink(riggedFace.eye,riggedFace.head.y)
+    Blendshape.setValue(PresetName.BlinkL, riggedFace.eye.l);
+    Blendshape.setValue(PresetName.BlinkR, riggedFace.eye.r);
     // Interpolate and set mouth blendshapes
     Blendshape.setValue(PresetName.I, lerp(riggedFace.mouth.shape.I,Blendshape.getValue(PresetName.I), .5));
     Blendshape.setValue(PresetName.A, lerp(riggedFace.mouth.shape.A,Blendshape.getValue(PresetName.A), .5));
@@ -173,7 +197,7 @@ const animateVRM = (vrm, results) => {
    riggedFace = Kalidokit.Face.solve(faceLandmarks,{
       runtime:"mediapipe",
       video:videoElement,
-      blinkSettings: [0.5, 1] // Lower thresholds for more sensitive blinking
+      blinkSettings: [0.5, 0.9] // Lower thresholds for more sensitive blinking
    });
    rigFace(riggedFace)
   }
