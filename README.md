@@ -38,6 +38,20 @@ To preview the built project:
 npm run preview
 ```
 
+## Deployment
+
+This project is configured for deployment on Netlify.
+
+1. Push your code to a Git repository (e.g., GitHub).
+
+2. Connect your repository to Netlify.
+
+3. Set the build settings:
+   - Build command: `npm run build`
+   - Publish directory: `dist`
+
+4. Deploy.
+
 ## Dependencies
 
 - [Vite](https://vitejs.dev/) - Build tool
