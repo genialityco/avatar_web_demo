@@ -51,7 +51,7 @@ const loader = new THREE.GLTFLoader();
 loader.crossOrigin = "anonymous";
 // Import model from URL, add your own model here
 loader.load(
-  "public/avatar.vrm",
+  "/avatar.vrm",
 
   gltf => {
     THREE.VRMUtils.removeUnnecessaryJoints(gltf.scene);
