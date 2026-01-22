@@ -155,12 +155,22 @@ const rigFace = (riggedFace) => {
     //riggedFace.eye = Kalidokit.Face.stabilizeBlink(riggedFace.eye,riggedFace.head.y)
     Blendshape.setValue(PresetName.BlinkL, riggedFace.eye.l);
     Blendshape.setValue(PresetName.BlinkR, riggedFace.eye.r);
+    
     // Interpolate and set mouth blendshapes
     Blendshape.setValue(PresetName.I, lerp(riggedFace.mouth.shape.I,Blendshape.getValue(PresetName.I), .5));
     Blendshape.setValue(PresetName.A, lerp(riggedFace.mouth.shape.A,Blendshape.getValue(PresetName.A), .5));
     Blendshape.setValue(PresetName.E, lerp(riggedFace.mouth.shape.E,Blendshape.getValue(PresetName.E), .5));
     Blendshape.setValue(PresetName.O, lerp(riggedFace.mouth.shape.O,Blendshape.getValue(PresetName.O), .5));
     Blendshape.setValue(PresetName.U, lerp(riggedFace.mouth.shape.U,Blendshape.getValue(PresetName.U), .5));
+
+    // *** ANIMACIÓN DE CEJAS ***
+    // Interpolar y establecer el valor de las cejas levantadas
+    if (riggedFace.brow !== undefined) {
+        Blendshape.setValue(
+            PresetName.Fun, 
+            lerp(riggedFace.brow, Blendshape.getValue(PresetName.Fun), .5)
+        );
+    }
 
     //PUPILS
     //interpolate pupil and keep a copy of the value
