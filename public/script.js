@@ -46,44 +46,95 @@ animate();
 
 /* VRM CHARACTER SETUP */
 
+// Abort controller para cancelar cargas previas
+let currentLoadController = null;
+
+// Función para limpiar recursos de Three.js
+const disposeVRM = (vrm) => {
+  if (!vrm) return;
+  
+  vrm.scene.traverse((child) => {
+    if (child.geometry) {
+      child.geometry.dispose();
+    }
+    if (child.material) {
+      if (Array.isArray(child.material)) {
+        child.material.forEach(mat => mat.dispose());
+      } else {
+        child.material.dispose();
+      }
+    }
+  });
+};
+
 // Function to load VRM avatar
 const loadAvatar = (url) => {
+  // Cancelar carga anterior si está en progreso
+  if (currentLoadController) {
+    currentLoadController.abort();
+  }
+  
+  currentLoadController = new AbortController();
+  
   // Show loading
   document.getElementById('loading').style.display = 'block';
   document.getElementById('progress-bar').style.width = '0%';
+  document.getElementById('loading').querySelector('p').textContent = 'Loading model...';
 
   // Remove current VRM if exists
   if (currentVrm) {
     scene.remove(currentVrm.scene);
+    disposeVRM(currentVrm);
     currentVrm = null;
   }
 
   const loader = new THREE.GLTFLoader();
   loader.crossOrigin = "anonymous";
+  
   loader.load(
     url,
     gltf => {
+      // Verificar si la carga fue cancelada
+      if (currentLoadController.signal.aborted) {
+        disposeVRM(gltf);
+        return;
+      }
+      
       THREE.VRMUtils.removeUnnecessaryJoints(gltf.scene);
 
       THREE.VRM.from(gltf).then(vrm => {
+        if (currentLoadController.signal.aborted) {
+          disposeVRM(vrm);
+          return;
+        }
+        
         scene.add(vrm.scene);
         currentVrm = vrm;
         currentVrm.scene.rotation.y = Math.PI; // Rotate model 180deg to face camera
         document.getElementById('loading').style.display = 'none';
+        currentLoadController = null;
       });
     },
     progress => {
-      const percent = (progress.loaded / progress.total) * 100;
-      document.getElementById('progress-bar').style.width = percent + '%';
-      console.log(
-        "Loading model...",
-        percent,
-        "%"
-      );
+      // Manejo seguro del progreso (evitar Infinity)
+      if (progress.total > 0) {
+        const percent = (progress.loaded / progress.total) * 100;
+        document.getElementById('progress-bar').style.width = percent + '%';
+        document.getElementById('loading').querySelector('p').textContent = `Loading model... ${Math.round(percent)}%`;
+      } else {
+        // Si el total es desconocido, mostrar animación de carga
+        document.getElementById('progress-bar').style.width = '100%';
+        document.getElementById('progress-bar').style.opacity = '0.5';
+      }
     },
     error => {
-      console.error(error);
-      document.getElementById('loading').innerHTML = '<p>Error loading model</p>';
+      if (!currentLoadController.signal.aborted) {
+        console.error(error);
+        document.getElementById('loading').querySelector('p').textContent = 'Error loading model';
+        setTimeout(() => {
+          document.getElementById('loading').style.display = 'none';
+        }, 3000);
+      }
     }
   );
 };
