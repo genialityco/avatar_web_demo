@@ -52,6 +52,7 @@ video {
 }
 body {
     margin: 0;
+    background-color: #333;
 }
 canvas {
     display: block;
